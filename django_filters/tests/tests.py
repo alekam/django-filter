@@ -156,171 +156,151 @@ class MultipleLookupTypesTest(TestCase):
         
         self.assertEqual(list(F({}).qs), list(Article.objects.all()))
 
-filter_tests = """
->>> from datetime import datetime
->>> from django import forms
->>> from django.core.management import call_command
->>> import django_filters
->>> from django_filters import FilterSet
->>> from django_filters.widgets import LinkWidget
->>> from django_filters.tests.models import User, Comment, Book, STATUS_CHOICES
 
->>> call_command('loaddata', 'test_data', verbosity=0)
+class OldDocTest(TestCase):
+    
+    def test_copied_from_doctest(self):
+        from datetime import datetime
+        from django import forms
+        from django.core.management import call_command
+        import django_filters
+        from django_filters import FilterSet
+        from django_filters.widgets import LinkWidget
+        from django_filters.tests.models import User, Comment, Book, STATUS_CHOICES
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
+        call_command('loaddata', 'test_data', verbosity=0)
 
->>> F.base_filters.keys()
-['username', 'first_name', 'last_name', 'status', 'is_active', 'favorite_books']
+        class F(FilterSet):
+            class Meta:
+                model = User
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         exclude = ['is_active']
+        self.assertEquals(F.base_filters.keys(), ['username', 'first_name', 'last_name', 'status', 'is_active', 'favorite_books'])
 
->>> F.base_filters.keys()
-['username', 'first_name', 'last_name', 'status', 'favorite_books']
+        class F(FilterSet):
+            class Meta:
+                model = User
+                exclude = ['is_active']
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['status']
+        self.assertEquals(F.base_filters.keys(),
+                          ['username', 'first_name', 'last_name', 'status', 'favorite_books'])
 
->>> f = F({'status': '1'}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>]
->>> print f.form
-<tr><th><label for="id_status">Status:</label></th><td><select name="status" id="id_status">
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['status']
+
+        f = F({'status': '1'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>]')
+        self.assertEquals(unicode(f.form), u"""<tr><th><label for="id_status">Status:</label></th><td><select name="status" id="id_status">
 <option value="0">Regular</option>
 <option value="1" selected="selected">Admin</option>
-</select></td></tr>
+</select></td></tr>""")
 
->>> class F(FilterSet):
-...     status = django_filters.ChoiceFilter(widget=forms.RadioSelect, choices=STATUS_CHOICES)
-...     class Meta:
-...         model = User
-...         fields = ['status']
+        class F(FilterSet):
+            status = django_filters.ChoiceFilter(widget=forms.RadioSelect, choices=STATUS_CHOICES)
+            class Meta:
+                model = User
+                fields = ['status']
 
->>> f = F(queryset=User.objects.all())
->>> print f.form
-<tr><th><label for="id_status_0">Status:</label></th><td><ul>
+        f = F(queryset=User.objects.all())
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_status_0">Status:</label></th><td><ul>
 <li><label for="id_status_0"><input type="radio" id="id_status_0" value="0" name="status" /> Regular</label></li>
 <li><label for="id_status_1"><input type="radio" id="id_status_1" value="1" name="status" /> Admin</label></li>
-</ul></td></tr>
+</ul></td></tr>''')
 
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['username']
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['username']
 
->>> F.base_filters.keys()
-['username']
+        self.assertEquals(F.base_filters.keys(), ['username'])
 
->>> f = F(queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
->>> f = F({'username': 'alex'}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>]
->>> print f.form
-<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" value="alex" id="id_username" /></td></tr>
+        f = F(queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
+        f = F({'username': 'alex'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>]')
+        self.assertEquals(unicode(f.form), u'<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" value="alex" id="id_username" /></td></tr>')
 
->>> class F(FilterSet):
-...     username = django_filters.CharFilter(action=lambda qs, value: qs.filter(**{'username__startswith': value}))
-...     class Meta:
-...         model = User
-...         fields = ['username']
+        class F(FilterSet):
+            username = django_filters.CharFilter(action=lambda qs, value: qs.filter(**{'username__startswith': value}))
+            class Meta:
+                model = User
+                fields = ['username']
 
->>> f = F({'username': 'a'}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>]
+        f = F({'username': 'a'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>]')
 
->>> class F(FilterSet):
-...     status = django_filters.MultipleChoiceFilter(choices=STATUS_CHOICES)
-...     class Meta:
-...         model = User
-...         fields = ['status']
+        class F(FilterSet):
+            status = django_filters.MultipleChoiceFilter(choices=STATUS_CHOICES)
+            class Meta:
+                model = User
+                fields = ['status']
 
->>> f = F(queryset=User.objects.all())
->>> print f.form
-<tr><th><label for="id_status">Status:</label></th><td><select multiple="multiple" name="status" id="id_status">
+        f = F(queryset=User.objects.all())
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_status">Status:</label></th><td><select multiple="multiple" name="status" id="id_status">
 <option value="0">Regular</option>
 <option value="1">Admin</option>
-</select></td></tr>
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
->>> f = F({'status': ['0']}, queryset=User.objects.all())
->>> f.qs
-[<User: aaron>, <User: jacob>]
->>> f = F({'status': ['0', '1']}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
+</select></td></tr>''')
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
+        f = F({'status': ['0']}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: aaron>, <User: jacob>]')
+        f = F({'status': ['0', '1']}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = Comment
-...         fields = ['date']
+        class F(FilterSet):
+            class Meta:
+                model = Comment
+                fields = ['date']
 
->>> f = F({'date': '01/30/10'}, queryset=Comment.objects.all())
->>> f.qs
-[<Comment: alex said super awesome!>]
+        f = F({'date': '01/30/10'}, queryset=Comment.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<Comment: alex said super awesome!>]')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = Comment
-...         fields = ['author']
+        class F(FilterSet):
+            class Meta:
+                model = Comment
+                fields = ['author']
 
->>> f = F({'author': '2'}, queryset=Comment.objects.all())
->>> f.qs
-[<Comment: aaron said psycadelic!>]
+        f = F({'author': '2'}, queryset=Comment.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<Comment: aaron said psycadelic!>]')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['favorite_books']
->>> f = F(queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['favorite_books']
+        f = F(queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
 
->>> f = F({'favorite_books': ['1']}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>]
->>> f = F({'favorite_books': ['1', '3']}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>]
->>> f = F({'favorite_books': ['2']}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>]
+        f = F({'favorite_books': ['1']}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>]')
+        f = F({'favorite_books': ['1', '3']}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>]')
+        f = F({'favorite_books': ['2']}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>]')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['username', 'status']
-...         order_by = ['status']
->>> f = F({'o': 'status'}, queryset=User.objects.all())
->>> f.qs
-[<User: aaron>, <User: jacob>, <User: alex>]
->>> print f.form
-<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" id="id_username" /></td></tr>
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['username', 'status']
+                order_by = ['status']
+        f = F({'o': 'status'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: aaron>, <User: jacob>, <User: alex>]')
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" id="id_username" /></td></tr>
 <tr><th><label for="id_status">Status:</label></th><td><select name="status" id="id_status">
 <option value="0">Regular</option>
 <option value="1">Admin</option>
 </select></td></tr>
 <tr><th><label for="id_o">Ordering:</label></th><td><select name="o" id="id_o">
 <option value="status" selected="selected">Status</option>
-</select></td></tr>
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['username', 'status']
-...         order_by = True
->>> f = F({'o': 'username'}, queryset=User.objects.all())
->>> f.qs
-[<User: aaron>, <User: alex>, <User: jacob>]
->>> print f.form
-<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" id="id_username" /></td></tr>
+</select></td></tr>''')
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['username', 'status']
+                order_by = True
+        f = F({'o': 'username'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: aaron>, <User: alex>, <User: jacob>]')
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" id="id_username" /></td></tr>
 <tr><th><label for="id_status">Status:</label></th><td><select name="status" id="id_status">
 <option value="0">Regular</option>
 <option value="1">Admin</option>
@@ -328,74 +308,64 @@ filter_tests = """
 <tr><th><label for="id_o">Ordering:</label></th><td><select name="o" id="id_o">
 <option value="username" selected="selected">Username</option>
 <option value="status">Status</option>
-</select></td></tr>
+</select></td></tr>''')
 
->>> class F(FilterSet):
-...     price = django_filters.NumberFilter(lookup_type='lt')
-...     class Meta:
-...         model = Book
-...         fields = ['price']
+        class F(FilterSet):
+            price = django_filters.NumberFilter(lookup_type='lt')
+            class Meta:
+                model = Book
+                fields = ['price']
 
->>> f = F({'price': 15}, queryset=Book.objects.all())
->>> f.qs
-[<Book: Ender's Game>]
+        f = F({'price': 15}, queryset=Book.objects.all())
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>]")
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['is_active']
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['is_active']
 
-'2' and '3' are how the field expects the data from the browser
->>> f = F({'is_active': '2'}, queryset=User.objects.all())
->>> f.qs
-[<User: jacob>]
->>> f = F({'is_active': '3'}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>]
->>> f = F({'is_active': '1'}, queryset=User.objects.all())
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
->>> class F(FilterSet):
-...     average_rating = django_filters.NumberFilter(lookup_type='gt')
-...     class Meta:
-...         model = Book
-...         fields = ['average_rating']
+        #'2' and '3' are how the field expects the data from the browser
+        f = F({'is_active': '2'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: jacob>]')
+        f = F({'is_active': '3'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>]')
+        f = F({'is_active': '1'}, queryset=User.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
+        class F(FilterSet):
+            average_rating = django_filters.NumberFilter(lookup_type='gt')
+            class Meta:
+                model = Book
+                fields = ['average_rating']
 
->>> f = F({'average_rating': '4.5'}, queryset=Book.objects.all())
->>> f.qs
-[<Book: Ender's Game>, <Book: Rainbox Six>]
+        f = F({'average_rating': '4.5'}, queryset=Book.objects.all())
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>, <Book: Rainbox Six>]")
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = Comment
-...         fields = ['time']
+        class F(FilterSet):
+            class Meta:
+                model = Comment
+                fields = ['time']
 
->>> f = F({'time': '12:55'}, queryset=Comment.objects.all())
->>> f.qs
-[<Comment: jacob said funky fresh!>]
+        f = F({'time': '12:55'}, queryset=Comment.objects.all())
+        self.assertEquals(unicode(f.qs), u'[<Comment: jacob said funky fresh!>]')
 
->>> class F(FilterSet):
-...     price = django_filters.RangeFilter()
-...     class Meta:
-...         model = Book
-...         fields = ['price']
->>> f = F(queryset=Book.objects.all())
->>> print f.form
-<tr><th><label for="id_price_0">Price:</label></th><td><input type="text" name="price_0" id="id_price_0" />-<input type="text" name="price_1" id="id_price_1" /></td></tr>
->>> f.qs
-[<Book: Ender's Game>, <Book: Rainbox Six>, <Book: Snowcrash>]
->>> f = F({'price_0': '5', 'price_1': '15'}, queryset=Book.objects.all())
->>> f.qs
-[<Book: Ender's Game>, <Book: Rainbox Six>]
+        class F(FilterSet):
+            price = django_filters.RangeFilter()
+            class Meta:
+                model = Book
+                fields = ['price']
+        f = F(queryset=Book.objects.all())
+        self.assertEquals(unicode(f.form), u'<tr><th><label for="id_price_0">Price:</label></th><td><input type="text" name="price_0" id="id_price_0" />-<input type="text" name="price_1" id="id_price_1" /></td></tr>')
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>, <Book: Rainbox Six>, <Book: Snowcrash>]")
+        f = F({'price_0': '5', 'price_1': '15'}, queryset=Book.objects.all())
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>, <Book: Rainbox Six>]")
 
->>> class F(FilterSet):
-...     price = django_filters.NumberFilter(lookup_type=None)
-...     class Meta:
-...         model = Book
-...         fields = ['price']
->>> f = F(queryset=Book.objects.all())
->>> print f.form
-<tr><th><label for="id_price_0">Price:</label></th><td><input type="text" name="price_0" id="id_price_0" /><select name="price_1" id="id_price_1">
+        class F(FilterSet):
+            price = django_filters.NumberFilter(lookup_type=None)
+            class Meta:
+                model = Book
+                fields = ['price']
+        f = F(queryset=Book.objects.all())
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_price_0">Price:</label></th><td><input type="text" name="price_0" id="id_price_0" /><select name="price_1" id="id_price_1">
 <option value="contains">contains</option>
 <option value="day">day</option>
 <option value="endswith">endswith</option>
@@ -418,145 +388,126 @@ filter_tests = """
 <option value="startswith">startswith</option>
 <option value="week_day">week_day</option>
 <option value="year">year</option>
-</select></td></tr>
->>> class F(FilterSet):
-...     price = django_filters.NumberFilter(lookup_type=['lt', 'gt'])
-...     class Meta:
-...         model = Book
-...         fields = ['price']
->>> f = F(queryset=Book.objects.all())
->>> print f.form
-<tr><th><label for="id_price_0">Price:</label></th><td><input type="text" name="price_0" id="id_price_0" /><select name="price_1" id="id_price_1">
+</select></td></tr>''')
+        class F(FilterSet):
+            price = django_filters.NumberFilter(lookup_type=['lt', 'gt'])
+            class Meta:
+                model = Book
+                fields = ['price']
+        f = F(queryset=Book.objects.all())
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_price_0">Price:</label></th><td><input type="text" name="price_0" id="id_price_0" /><select name="price_1" id="id_price_1">
 <option value="gt">gt</option>
 <option value="lt">lt</option>
-</select></td></tr>
->>> f = F({'price_0': '15', 'price_1': 'lt'}, queryset=Book.objects.all())
->>> f.qs
-[<Book: Ender's Game>]
->>> f = F({'price_0': '15', 'price_1': 'lt'})
->>> f.qs
-[<Book: Ender's Game>]
->>> f = F({'price_0': '', 'price_1': 'lt'})
->>> f.qs
-[<Book: Ender's Game>, <Book: Rainbox Six>, <Book: Snowcrash>]
+</select></td></tr>''')
+        f = F({'price_0': '15', 'price_1': 'lt'}, queryset=Book.objects.all())
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>]")
+        f = F({'price_0': '15', 'price_1': 'lt'})
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>]")
+        f = F({'price_0': '', 'price_1': 'lt'})
+        self.assertEquals(unicode(f.qs), u"[<Book: Ender's Game>, <Book: Rainbox Six>, <Book: Snowcrash>]")
 
->>> class F(FilterSet):
-...     status = django_filters.ChoiceFilter(widget=LinkWidget, choices=STATUS_CHOICES)
-...     class Meta:
-...         model = User
-...         fields = ['status']
->>> f = F()
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
->>> print f.form
-<tr><th><label for="id_status">Status:</label></th><td><ul id="id_status">
+        class F(FilterSet):
+            status = django_filters.ChoiceFilter(widget=LinkWidget, choices=STATUS_CHOICES)
+            class Meta:
+                model = User
+                fields = ['status']
+        f = F()
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_status">Status:</label></th><td><ul id="id_status">
 <li><a href="?status=0">Regular</a></li>
 <li><a href="?status=1">Admin</a></li>
-</ul></td></tr>
->>> f = F({'status': '1'})
->>> f.qs
-[<User: alex>]
->>> print f.form
-<tr><th><label for="id_status">Status:</label></th><td><ul id="id_status">
+</ul></td></tr>''')
+        f = F({'status': '1'})
+        self.assertEquals(unicode(f.qs), u'[<User: alex>]')
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_status">Status:</label></th><td><ul id="id_status">
 <li><a href="?status=0">Regular</a></li>
 <li><a class="selected" href="?status=1">Admin</a></li>
-</ul></td></tr>
+</ul></td></tr>''')
 
->>> class F(FilterSet):
-...     date = django_filters.DateRangeFilter(widget=LinkWidget)
-...     class Meta:
-...         model = Comment
-...         fields = ['date']
->>> f = F()
->>> print f.form
-<tr><th><label for="id_date">Date:</label></th><td><ul id="id_date">
+        class F(FilterSet):
+            date = django_filters.DateRangeFilter(widget=LinkWidget)
+            class Meta:
+                model = Comment
+                fields = ['date']
+        f = F()
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_date">Date:</label></th><td><ul id="id_date">
 <li><a class="selected" href="?date=">Any Date</a></li>
 <li><a href="?date=1">Today</a></li>
 <li><a href="?date=2">Past 7 days</a></li>
 <li><a href="?date=3">This month</a></li>
 <li><a href="?date=4">This year</a></li>
-</ul></td></tr>
->>> f = F({'date': '4'})
->>> f.qs
-[<Comment: alex said super awesome!>, <Comment: aaron said psycadelic!>]
->>> f = F({})
->>> print f.form
-<tr><th><label for="id_date">Date:</label></th><td><ul id="id_date">
+</ul></td></tr>''')
+        f = F({'date': '4'})
+        self.assertEquals(unicode(f.qs), u'[<Comment: alex said super awesome!>, <Comment: aaron said psycadelic!>]')
+        f = F({})
+        self.assertEquals(unicode(f.form), u'''<tr><th><label for="id_date">Date:</label></th><td><ul id="id_date">
 <li><a class="selected" href="?date=">Any Date</a></li>
 <li><a href="?date=1">Today</a></li>
 <li><a href="?date=2">Past 7 days</a></li>
 <li><a href="?date=3">This month</a></li>
 <li><a href="?date=4">This year</a></li>
-</ul></td></tr>
->>> f.qs
-[<Comment: alex said super awesome!>, <Comment: aaron said psycadelic!>, <Comment: jacob said funky fresh!>]
->>> _ = Comment.objects.create(text="Wowa", author = User.objects.get(username="alex"), date=datetime.today(), time="12:30")
->>> f = F({'date': '2'})
->>> f.qs
-[<Comment: alex said Wowa>]
+</ul></td></tr>''')
+        self.assertEquals(unicode(f.qs), u'[<Comment: alex said super awesome!>, <Comment: aaron said psycadelic!>, <Comment: jacob said funky fresh!>]')
+        _ = Comment.objects.create(text="Wowa", author = User.objects.get(username="alex"), date=datetime.today(), time="12:30")
+        f = F({'date': '2'})
+        self.assertEquals(unicode(f.qs), u'[<Comment: alex said Wowa>]')
 
->>> class MyForm(forms.Form):
-...     def as_table(self):
-...         return "lol string"
+        class MyForm(forms.Form):
+            def as_table(self):
+                return "lol string"
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = Comment
-...         form = MyForm
+        class F(FilterSet):
+            class Meta:
+                model = Comment
+                form = MyForm
 
->>> print F().form
-lol string
+        self.assertEquals(unicode(F().form), u'lol string')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['status', 'username']
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['status', 'username']
 
->>> print F().form
-<tr><th><label for="id_status">Status:</label></th><td><select name="status" id="id_status">
+        self.assertEquals(unicode(F().form), u'''<tr><th><label for="id_status">Status:</label></th><td><select name="status" id="id_status">
 <option value="0">Regular</option>
 <option value="1">Admin</option>
 </select></td></tr>
-<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" id="id_username" /></td></tr>
+<tr><th><label for="id_username">Username:</label></th><td><input type="text" name="username" id="id_username" /></td></tr>''')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         fields = ['name']
-Traceback (most recent call last):
-...
-TypeError: Meta.fields contains a field that isn't defined on this FilterSet
+        class F(FilterSet):
+            class Meta:
+                model = User
+                fields = ['name']
+        #Traceback (most recent call last):
+        #...
+        #TypeError: Meta.fields contains a field that isn't defined on this FilterSet
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = Comment
-...         fields = ['author', 'text']
+        class F(FilterSet):
+            class Meta:
+                model = Comment
+                fields = ['author', 'text']
 
->>> print F().form
-<tr><th><label for="id_author">Author:</label></th><td><select name="author" id="id_author">
+        self.assertEquals(unicode(F().form), u'''<tr><th><label for="id_author">Author:</label></th><td><select name="author" id="id_author">
 <option value="" selected="selected">---------</option>
 <option value="1">alex</option>
 <option value="2">aaron</option>
 <option value="3">jacob</option>
 </select></td></tr>
-<tr><th><label for="id_text">Text:</label></th><td><input type="text" name="text" id="id_text" /></td></tr>
+<tr><th><label for="id_text">Text:</label></th><td><input type="text" name="text" id="id_text" /></td></tr>''')
 
->>> class F(FilterSet):
-...     class Meta:
-...         model = User
-...         order_by = ['username']
+        class F(FilterSet):
+            class Meta:
+                model = User
+                order_by = ['username']
 
->>> f = F({})
->>> f.qs
-[<User: alex>, <User: aaron>, <User: jacob>]
+        f = F({})
+        self.assertEquals(unicode(f.qs), u'[<User: alex>, <User: aaron>, <User: jacob>]')
 
->>> class F(FilterSet):
-...     price = django_filters.NumberFilter(lookup_type=['lt', 'gt', 'exact'])
-...     class Meta:
-...         model = Book
-...         fields = ['price']
+        class F(FilterSet):
+            price = django_filters.NumberFilter(lookup_type=['lt', 'gt', 'exact'])
+            class Meta:
+                model = Book
+                fields = ['price']
 
->>> f = F({'price_0': '15'})
->>> f.qs
-[<Book: Rainbox Six>]
-"""
+        f = F({'price_0': '15'})
+        self.assertEquals(unicode(f.qs), u'[<Book: Rainbox Six>]')
